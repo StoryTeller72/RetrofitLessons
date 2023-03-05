@@ -1,7 +1,11 @@
 package com.example.retrofitlessons
 
+import android.net.LinkAddress
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
+import androidx.recyclerview.widget.LinearLayoutManager
+import androidx.recyclerview.widget.ListAdapter
+import com.example.retrofitlessons.adapter.ProductAdapter
 import com.example.retrofitlessons.databinding.ActivityMainBinding
 import com.example.retrofitlessons.retrofit.ProductApi
 import kotlinx.coroutines.CoroutineScope
@@ -14,11 +18,16 @@ import retrofit2.create
 class MainActivity : AppCompatActivity() {
 
     private lateinit var binding: ActivityMainBinding
+    lateinit var adapter: ProductAdapter
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
+
+        adapter = ProductAdapter()
+        binding.rv.layoutManager = LinearLayoutManager(this)
+        binding.rv.adapter = adapter
 
         val retrofit = Retrofit.Builder()
             .baseUrl("https://dummyjson.com")
@@ -26,13 +35,14 @@ class MainActivity : AppCompatActivity() {
 
         val productApi = retrofit.create(ProductApi::class.java)
 
-        binding.btn.setOnClickListener {
-            CoroutineScope(Dispatchers.IO).launch {
-                val product = productApi.getProductById(1)
-                runOnUiThread{
-                    binding.title.text = product.title
+        CoroutineScope(Dispatchers.IO).launch {
+            val list = productApi.getAllProducts()
+            runOnUiThread{
+                binding.apply {
+                    adapter.submitList(list.products)
                 }
             }
         }
+
     }
 }
